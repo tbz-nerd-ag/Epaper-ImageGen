@@ -63,10 +63,10 @@ class ImageGenerator:
 
         # Schriftart laden
         try:
-            self.font_huge = ImageFont.truetype(self.font, 64)  # Riesenschrift
-            self.font_large = ImageFont.truetype(self.font, 48)  # Große Schrift für Fächer
-            self.font_medium = ImageFont.truetype(self.font, 32)  # Mittlere Schrift für Klassen und Lehrer
-            self.font_small = ImageFont.truetype(self.font, 24)  # Kleine Schrift für "generiert um" und Zeiten
+            self.font_huge = ImageFont.truetype(self.font, 72)  # Riesenschrift
+            self.font_large = ImageFont.truetype(self.font, 52)  # Große Schrift für Fächer
+            self.font_medium = ImageFont.truetype(self.font, 40)  # Mittlere Schrift für Klassen und Lehrer
+            self.font_small = ImageFont.truetype(self.font, 26)  # Kleine Schrift für "generiert um" und Zeiten
         except IOError as e:
             print("Fonts konnten nicht geladen werden.", e)
 
@@ -140,6 +140,10 @@ class ImageGenerator:
             # keine stunden zum Anzeigen
             draw.text((image.width//2, 240), "Heute kein weiterer Unterricht", font=self.font_large, fill=0, anchor="mm")
             draw.text((image.width//2, 320), "in diesem Raum", font=self.font_large, fill=0, anchor="mm")
+        elif len(lessons) > 6:
+            # keine stunden zum Anzeigen
+            draw.text((image.width//2, 240), "Mehr als 6 Stunden können", font=self.font_large, fill=0, anchor="mm")
+            draw.text((image.width//2, 320), "nicht angezeigt werden.", font=self.font_large, fill=0, anchor="mm") 
         else:
             # check if dummy lessons need to be created
             if len(lessons) < 3:
@@ -193,6 +197,7 @@ class ImageGenerator:
 
         self.save_image(image, room)
 
+
     def save_image(self, image, room):
         # Überprüfen, ob der Wartungsmodus false oder true ist:
         # Bild nach Raumname in ROMMIMAGES speichern
@@ -232,7 +237,7 @@ class ImageGenerator:
         if 'is_dummy' in lesson:
             return image
 
-        draw.rounded_rectangle([0, 0, width, height], fill=self.lesson_rect_background_color, outline=color, radius=self.lesson_rect_corner_radius,
+        draw.rounded_rectangle([0, 0, width-1, height-1], fill=self.lesson_rect_background_color, outline=color, radius=self.lesson_rect_corner_radius,
                        width=self.lesson_rect_outline_width)
 
         # draw lesson texts
@@ -344,9 +349,13 @@ class ImageGenerator:
     def image_to_hex_string(image_path):
         with Image.open(image_path) as img:
             img = img.resize((400, 300)) 
-            gray_image = img.convert('1')   
+            # convert image to black and white with threshhold
+            thresh = 200
+            fn = lambda x : 0 if x < thresh else 255
+            gray_image = img.convert('L').point(fn, mode='1')
+            gray_image.save("room_images/gray_image.png") 
             pixel_array = np.array(gray_image, dtype=np.uint8)
-            pixel_array = (pixel_array > 0).astype(np.uint8) 
+            pixel_array = (pixel_array > 0).astype(np.uint8)
             packed = np.packbits(pixel_array.flatten())
         return ', '.join('0x{:02x}'.format(byte) for byte in bytes(packed))
 

@@ -35,7 +35,7 @@
       "lesson_cancelled_color": 150,
       "lesson_irregular_color": 0,
       "lesson_default_color": 0,
-      "lesson_rect_outline_width": 5,
+      "lesson_rect_outline_width": 3,
       "lesson_text_padding": 20,
       "double_lesson_multiplier": 1.75,
       "battery_status_height": 16,
