@@ -8,6 +8,7 @@ import numpy as np
 import json
 
 
+# noinspection PyInterpreter
 class ImageGenerator:
     font_huge = ImageFont.load_default()
     font_large = ImageFont.load_default()
@@ -130,7 +131,7 @@ class ImageGenerator:
          #         anchor="lm")
 
         # draw battery status
-        image.paste(self.draw_battery_status(50), (self.outside_margin + self.lesson_rect_corner_radius//2, int(self.size[1] - self.battery_status_height - (self.outside_margin - self.battery_status_height/2))))
+        #image.paste(self.draw_battery_status(50), (self.outside_margin + self.lesson_rect_corner_radius//2, int(self.size[1] - self.battery_status_height - (self.outside_margin - self.battery_status_height/2))))
 
         # draw generated text
         self.draw_date_generated(draw, self.font_small, 0)
@@ -140,11 +141,10 @@ class ImageGenerator:
             # keine stunden zum Anzeigen
             draw.text((image.width//2, 240), "Heute kein weiterer Unterricht", font=self.font_large, fill=0, anchor="mm")
             draw.text((image.width//2, 320), "in diesem Raum", font=self.font_large, fill=0, anchor="mm")
-        elif len(lessons) > 6:
-            # keine stunden zum Anzeigen
-            draw.text((image.width//2, 240), "Mehr als 6 Stunden können", font=self.font_large, fill=0, anchor="mm")
-            draw.text((image.width//2, 320), "nicht angezeigt werden.", font=self.font_large, fill=0, anchor="mm") 
         else:
+            # remove every lesson after 6th
+            if len(lessons) > 6:
+                del lessons[5:len(lessons)-1]
             # check if dummy lessons need to be created
             if len(lessons) < 3:
                 dummys_to_create = 3 - len(lessons)
@@ -195,6 +195,8 @@ class ImageGenerator:
                             (self.outside_margin, self.upper_margin + previous_lesson_image_height + spacing * i))
                 previous_lesson_image_height += lesson_image.height
 
+        image = image.resize((400, 300))
+        image = self.convert_image_black_white(image)
         self.save_image(image, room)
 
 
@@ -316,12 +318,15 @@ class ImageGenerator:
 
     def draw_room_and_day(self, date, draw, room, font, color):
         current_day_num = datetime.strptime(date, '%Y-%m-%d').weekday()
-        days = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag",
-                "Sonntag"]
+        days = ["Mo.", "Di.", "Mi.", "Do.", "Fr.", "Sa.",
+                "So."]
 
-        room_day_text = f'{room} - {days[current_day_num]}'
+        day_text = f'{days[current_day_num]}'
+        room_text = f'{room}'
 
-        draw.text((self.size[0] - self.outside_margin, self.upper_margin // 2), room_day_text, font=font, fill=color,
+        draw.text(((self.size[0] + self.cfg["logo_size"][1]) // 2, self.upper_margin // 2), room_text, font=font, fill=color,
+                  anchor='mm', stroke_width=1)
+        draw.text((self.size[0] - self.outside_margin, self.upper_margin // 2), day_text, font=font, fill=color,
                   anchor='rm')
 
     def draw_battery_status(self, charge):
@@ -346,15 +351,17 @@ class ImageGenerator:
                   fill=color, anchor='rm')
 
     @staticmethod
+    def convert_image_black_white(image):
+        thresh = 200
+        fn = lambda x: 0 if x < thresh else 255
+        return image.convert('L').point(fn, mode='1')
+
+
+    @staticmethod
     def image_to_hex_string(image_path):
         with Image.open(image_path) as img:
-            img = img.resize((400, 300)) 
             # convert image to black and white with threshhold
-            thresh = 200
-            fn = lambda x : 0 if x < thresh else 255
-            gray_image = img.convert('L').point(fn, mode='1')
-            gray_image.save("room_images/gray_image.png") 
-            pixel_array = np.array(gray_image, dtype=np.uint8)
+            pixel_array = np.array(img, dtype=np.uint8)
             pixel_array = (pixel_array > 0).astype(np.uint8)
             packed = np.packbits(pixel_array.flatten())
         return ', '.join('0x{:02x}'.format(byte) for byte in bytes(packed))

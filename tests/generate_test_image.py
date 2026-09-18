@@ -3,7 +3,7 @@ from src.image_generator import ImageGenerator
 
 image_generator = ImageGenerator()
 image_generator.generate_image("2.310", lessons=[{
-        "date": "2026-05-01",
+        "date": "2026-04-30",
         "start_time": "0815",
         "end_time": "0940",
         "teacher": "SCJ",
@@ -70,4 +70,16 @@ image_generator.generate_image("2.310", lessons=[{
         "anzahl": 2,
         "classroom": '2.310'
     },
+{
+        "date": "2026-05-01",
+        "start_time": "1530",
+        "end_time": "1700",
+        "teacher": "WIB",
+        "subject": "Deu LK",
+        "klasse": "BGT251",
+        "code": 'regular',
+        "room_changed": False,
+        "anzahl": 2,
+        "classroom": '2.310'
+    }
 ])
